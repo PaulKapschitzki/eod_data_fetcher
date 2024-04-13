@@ -1,6 +1,7 @@
 // Erforderliche Module importieren
 const express = require("express");
 const cors = require('cors'); // Importiere das cors-Modul für Cross-Origin Resource Sharing
+const path = require('path'); // // Die `path`-Bibliothek wird benötigt, um Pfadoperationen durchzuführen
 
 // Erstelle eine Express-Anwendung
 const app = express();
@@ -11,42 +12,80 @@ const PORT = 3000;
 // Middleware verwenden, um Cors zu aktivieren
 app.use(cors());
 
-// Definiere eine Route für GET-Anfragen auf der Wurzel-URL ('/')
-app.get('/', async (req, res) => {
+// Middleware, um statische Dateien aus dem "public" Verzeichnis zu servieren
+app.use(express.static(path.join(__dirname, "public")));
+
+// Definiere eine GET-Route für den Endpunkt "/", um die index.html Datei zu servieren
+app.get("/", (req, res) => {
+  // Sende die index.html Datei als Antwort
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Definiere eine Route für GET-Anfragen auf '/tickers'
+app.get("/tickers", async (req, res) => {
   try {
-    // Dynamisches Importieren von node-fetch
-    const fetch = await import('node-fetch');
+    // API-URL für NYSE-Ticker
+    const urlNyse = "https://eodhd.com/api/exchange-symbol-list/NYSE?delisted=1&api_token=66112e15926fc3.23171860&fmt=json";
+    // API-URL für NASDAQ-Ticker
+    const urlNasdaq = "https://eodhd.com/api/exchange-symbol-list/NASDAQ?delisted=1&api_token=66112e15926fc3.23171860&fmt=json";
+    
+    // Tickerdaten von der API abrufen
+    const response = await fetch(urlNyse);
+    const data = await response.json();
 
-    // URL für die externe API
-    const url = "https://eodhd.com/api/exchanges-list/?api_token=66112e15926fc3.23171860&fmt=json";
+    // Tickerdaten verarbeiten und in ein Array von <li>-Elementen konvertieren
+    const tickerListItems = data.map(ticker => `<li>${ticker.Code} - ${ticker.Name}</li>`);
 
-    // Optionen für die fetch-Anfrage
-    const options = {
-      method: "GET", // GET-Anfrage
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
+    // Erfolgreiche Antwort mit den <li>-Elementen als JSON an den Client senden
+    // res.status(200).json({ tickers: tickerListItems });
 
-    // API-Anfrage senden und auf die Antwort warten
-    const response = await fetch.default(url, options);
-
-    // Wenn die Antwort erfolgreich ist, JSON-Daten extrahieren
-    if (response.ok) {
-      const data = await response.json();
-
-      // Erfolgreiche Antwort mit JSON-Daten an den Client senden
-      res.status(200).json(data);
-    } else {
-      // Bei einem Fehler in der API-Antwort entsprechend reagieren
-      res.status(response.status).json({ error: 'Error fetching data from API.' });
-    }
-  } catch (err) {
-    // Fehler beim Abrufen der API-Daten abfangen und entsprechend reagieren
-    console.log(err);
+    // Erfolgreiche Antwort mit den <li>-Elementen als HTML-String an den Client senden
+    // Alle <li>-Elemente in einen einzigen HTML-String zusammenführen
+    const tickerListHTML = tickerListItems.join('');
+    res.status(200).send(tickerListHTML);
+  } catch (error) {
+    // Fehlerbehandlung bei API-Anfragefehlern
+    console.error("Error fetching ticker data:", error);
     res.status(500).json({ error: 'Internal Server Error.' });
   }
 });
+
+// Definiere eine Route für GET-Anfragen auf der Wurzel-URL ('/')
+// app.get('/', async (req, res) => {
+//   try {
+//     // Dynamisches Importieren von node-fetch
+//     const fetch = await import('node-fetch');
+
+//     // URL für die externe API - Get list of all Exchanges of EOD API
+//     const url = "https://eodhd.com/api/exchanges-list/?api_token=66112e15926fc3.23171860&fmt=json";
+
+//     // Optionen für die fetch-Anfrage
+//     const options = {
+//       method: "GET", // GET-Anfrage
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     };
+
+//     // API-Anfrage senden und auf die Antwort warten
+//     const response = await fetch.default(url, options);
+
+//     // Wenn die Antwort erfolgreich ist, JSON-Daten extrahieren
+//     if (response.ok) {
+//       const data = await response.json();
+
+//       // Erfolgreiche Antwort mit JSON-Daten an den Client senden
+//       res.status(200).json(data);
+//     } else {
+//       // Bei einem Fehler in der API-Antwort entsprechend reagieren
+//       res.status(response.status).json({ error: 'Error fetching data from API.' });
+//     }
+//   } catch (err) {
+//     // Fehler beim Abrufen der API-Daten abfangen und entsprechend reagieren
+//     console.log(err);
+//     res.status(500).json({ error: 'Internal Server Error.' });
+//   }
+// });
 
 // Server starten und auf Verbindungen auf dem angegebenen Port warten
 app.listen(PORT, () => {
