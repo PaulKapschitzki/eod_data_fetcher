@@ -9,15 +9,23 @@
     "start": "nodemon index.js"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "nodemon": "^3.1.0",
     "eslint": "^9.0.0"
+=======
+    "nodemon": "^3.1.0"
+>>>>>>> 66c9dd37acd6b0ca9a10ac0a912c95ad775f7973
   },
   "keywords": [],
   "author": "Paul Portsch",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "node-fetch": "^3.3.2"
+=======
+    "express": "^4.19.2"
+>>>>>>> 66c9dd37acd6b0ca9a10ac0a912c95ad775f7973
   }
 }
